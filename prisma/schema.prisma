@@ -1,16 +1,131 @@
 generator client {
-  provider     = "prisma-client"
+  provider     = "prisma-client-js"
   output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "mysql"
+  //url      = env("DATABASE_URL")
 }
 
-// Adicione os modelos da aplicação aqui. Exemplo:
-// model User {
-//   id        Int      @id @default(autoincrement())
-//   email     String   @unique
-//   createdAt DateTime @default(now())
-// }
+// 1. Tabela Base: Pessoa
+model Pessoa {
+  id_pessoa  Int       @id @default(autoincrement()) @map("ID_pessoa")
+  cpf        String    @unique @map("CPF") @db.VarChar(11)
+  nome       String    @map("Nome") @db.VarChar(100)
+  data_nasc  DateTime? @map("Data_Nasc") @db.Date
+
+  // Relacionamentos 1:1 (Herança)
+  aluno     Aluno?
+  professor Professor?
+
+  @@map("Pessoa")
+}
+
+// 2. Tabela: Departamento
+model Departamento {
+  id_departamento Int    @id @default(autoincrement()) @map("ID_departamento")
+  nome_depar      String @map("Nome_depar") @db.VarChar(100)
+  sigla           String @map("Sigla") @db.VarChar(10)
+
+  // Relacionamento 1:N com Professor
+  professores Professor[]
+
+  @@map("Departamento")
+}
+
+// 3. Especialização: Aluno
+model Aluno {
+  id_pessoa    Int    @id @map("ID_pessoa")
+  ra           String @unique @map("RA") @db.VarChar(20)
+  status_matri String @map("Status_matri") @db.VarChar(20)
+
+  // Relação 1:1 com Pessoa (Usa a mesma chave id_pessoa)
+  pessoa Pessoa @relation(fields: [id_pessoa], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
+
+  // Relação 1:N com Matricula
+  matriculas Matricula[]
+
+  @@map("Aluno")
+}
+
+// 4. Especialização: Professor
+model Professor {
+  id_pessoa       Int @id @map("ID_pessoa")
+  id_departamento Int @map("ID_departamento")
+
+  // Relação 1:1 com Pessoa
+  pessoa Pessoa @relation(fields: [id_pessoa], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
+
+  // Relação 1:N com Departamento
+  departamento Departamento @relation(fields: [id_departamento], references: [id_departamento], onDelete: Restrict, onUpdate: Cascade)
+
+  // Relação 1:N com Turma
+  turmas Turma[]
+
+  @@map("Professor")
+}
+
+// 5. Tabela: Curso
+model Curso {
+  id_curso   Int    @id @default(autoincrement()) @map("ID_curso")
+  nome_curso String @map("Nome_curso") @db.VarChar(100)
+  duracao    Int    @map("Duracao")
+
+  // Relação 1:N com Disciplina
+  disciplinas Disciplina[]
+
+  @@map("Curso")
+}
+
+// 6. Tabela: Disciplina
+model Disciplina {
+  id_disciplina Int    @id @default(autoincrement()) @map("ID_disciplina")
+  nome_disc     String @map("Nome_disc") @db.VarChar(100)
+  id_curso      Int    @map("ID_curso")
+
+  // Relação 1:N com Curso
+  curso Curso @relation(fields: [id_curso], references: [id_curso], onDelete: Restrict, onUpdate: Cascade)
+
+  // Relação 1:N com Turma
+  turmas Turma[]
+
+  @@map("Disciplina")
+}
+
+// 7. Tabela: Turma
+model Turma {
+  id_turma      Int     @id @default(autoincrement()) @map("ID_turma")
+  ano           Int     @map("Ano")
+  semestre      Int     @map("Semestre")
+  horario       String? @map("Horario") @db.VarChar(50)
+  id_disciplina Int     @map("ID_disciplina")
+  id_professor  Int     @map("ID_professor")
+
+  // Relações com Disciplina e Professor
+  disciplina Disciplina @relation(fields: [id_disciplina], references: [id_disciplina], onDelete: Restrict, onUpdate: Cascade)
+  professor  Professor  @relation(fields: [id_professor], references: [id_pessoa], onDelete: Restrict, onUpdate: Cascade)
+
+  // Relação 1:N com Matricula
+  matriculas Matricula[]
+
+  @@map("Turma")
+}
+
+// 8. Tabela: Matricula (Entidade Associativa)
+model Matricula {
+  id_matricula Int      @id @default(autoincrement()) @map("ID_matricula")
+  id_aluno     Int      @map("ID_aluno")
+  id_turma     Int      @map("ID_turma")
+  nota         Decimal? @map("Nota") @db.Decimal(4, 2)
+  frequencia   Decimal? @map("Frequencia") @db.Decimal(5, 2)
+
+  // Relações com Aluno e Turma
+  aluno Aluno @relation(fields: [id_aluno], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
+  turma Turma @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: Cascade)
+
+  // Garante que o mesmo aluno não seja matriculado mais de uma vez na mesma turma
+  @@unique([id_aluno, id_turma], name: "UQ_Aluno_Turma")
+  @@map("Matricula")
+}

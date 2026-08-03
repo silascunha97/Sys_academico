@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /src/generated/prisma
+/src/schema.gql
 /node_modules
 /build
 

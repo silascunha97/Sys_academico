@@ -149,6 +149,65 @@ As regras de negócio representam o núcleo da aplicação e devem ser validadas
 
 Abaixo está a representação declarativa dos modelos de dados utilizando **Prisma ORM** com suporte a MySQL/PostgreSQL.
 
+## Arquitetura de pastas
+
+src/
+├── app.module.ts
+├── main.ts
+│
+├── common/                          # Utilitários globais e transversais (Cross-cutting)
+│   ├── decorators/                  # Decoradores customizados (ex: @CurrentUser, @Roles)
+│   ├── filters/                     # Catchers globais de exceção (Exceções HTTP/Prisma)
+│   ├── guards/                      # Guards globais (AuthGuard, RolesGuard)
+│   ├── interceptors/                # Interceptores (Logging, Transformação de Resposta)
+│   └── utils/                       # Funções puras utilitárias (ex: data, parsing)
+│
+├── core/                            # Kernel da aplicação (Infraestrutura global)
+│   ├── database/
+│   │   ├── prisma.module.ts
+│   │   └── prisma.service.ts        # Encapsulamento do PrismaClient
+│   └── config/                      # Validação e carregamento de variáveis de ambiente
+│
+└── modules/                         # Módulos de Negócio (Bounded Contexts)
+    │
+    ├── auth/                        # Autenticação e Gestão de Usuários
+    │   ├── dto/
+    │   ├── guards/
+    │   ├── strategies/              # JwtStrategy, LocalStrategy
+    │   ├── auth.controller.ts
+    │   ├── auth.service.ts
+    │   └── auth.module.ts
+    │
+    ├── academic/                    # Cursos e Disciplinas (Estrutura Estática)
+    │   ├── dto/
+    │   ├── academic.controller.ts
+    │   ├── academic.service.ts
+    │   └── academic.module.ts
+    │
+    ├── classes/                     # Oferta de Turmas e Alocação de Professores
+    │   ├── dto/
+    │   ├── classes.controller.ts
+    │   ├── classes.service.ts
+    │   └── classes.module.ts
+    │
+    ├── enrollments/                 # Núcleo do Sistema (Matrícula, Trancamento, Regras de Pré-requisito)
+    │   ├── domain/                  # Lógica Pura de Domínio (Sem acoplamento com Nest/Prisma)
+    │   │   ├── schedule-validator.ts # RN-02: Algoritmo de checagem de choque de horário
+    │   │   └── prerequisite-checker.ts # RN-01: Algoritmo de validação de pré-requisitos
+    │   ├── dto/
+    │   ├── enrollments.controller.ts
+    │   ├── enrollments.service.ts   # Orquestração do fluxo de matrícula
+    │   └── enrollments.module.ts
+    │
+    └── grades/                      # Fechamento de Pauta e Histórico Escolar
+        ├── domain/                  # Regras puras de cálculo e encerramento
+        │   ├── cr-calculator.ts     # RN-06: Cálculo do Coeficiente de Rendimento (Fórmula Matemática)
+        │   └── status-evaluator.ts  # RN-04: Avaliação de aprovação/reprovação (Nota vs Frequência)
+        ├── dto/
+        ├── grades.controller.ts
+        ├── grades.service.ts
+        └── grades.module.ts
+
 ```prisma
 datasource db {
   provider = "mysql"

@@ -151,6 +151,7 @@ Abaixo está a representação declarativa dos modelos de dados utilizando **Pri
 
 ## Arquitetura de pastas
 
+```text
 src/
 ├── app.module.ts
 ├── main.ts
@@ -190,8 +191,8 @@ src/
     │   ├── classes.service.ts
     │   └── classes.module.ts
     │
-    ├── enrollments/                 # Núcleo do Sistema (Matrícula, Trancamento, Regras de Pré-requisito)
-    │   ├── domain/                  # Lógica Pura de Domínio (Sem acoplamento com Nest/Prisma)
+    ├── enrollments/                 # Núcleo do Sistema (Matrícula, Trancamento, Regras)
+    │   ├── domain/                  # Lógica Pura de Domínio (Sem acoplamento Nest/Prisma)
     │   │   ├── schedule-validator.ts # RN-02: Algoritmo de checagem de choque de horário
     │   │   └── prerequisite-checker.ts # RN-01: Algoritmo de validação de pré-requisitos
     │   ├── dto/
@@ -201,12 +202,13 @@ src/
     │
     └── grades/                      # Fechamento de Pauta e Histórico Escolar
         ├── domain/                  # Regras puras de cálculo e encerramento
-        │   ├── cr-calculator.ts     # RN-06: Cálculo do Coeficiente de Rendimento (Fórmula Matemática)
-        │   └── status-evaluator.ts  # RN-04: Avaliação de aprovação/reprovação (Nota vs Frequência)
+        │   ├── cr-calculator.ts     # RN-06: Cálculo do Coeficiente de Rendimento
+        │   └── status-evaluator.ts  # RN-04: Avaliação de aprovação/reprovação
         ├── dto/
         ├── grades.controller.ts
         ├── grades.service.ts
         └── grades.module.ts
+```
 
 ```prisma
 datasource db {

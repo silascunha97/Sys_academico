@@ -88,6 +88,27 @@ Trata-se de um estudo de caso prático voltado para o desenvolvimento de uma apl
 * Garantia de integridade referencial e imutabilidade de registros históricos.
 * Implementação de travas e validações de regras de negócio em nível de serviço/domínio.
 
+## Roteiro de Execução Incremental (Roadmap)
+### Fase 1: Modelagem & Banco de Dados
+Refinamento do Schema Prisma com auto-relacionamento para pré-requisitos.
+
+Configuração do container MySQL via Docker Compose.
+
+Execução das migrations e escrita de scripts de seed com dados fictícios.
+
+### Fase 2: Serviços Core & Regras de Negócio
+Implementação dos módulos de autenticação JWT e controle de autorização (RBAC).
+
+Construção do serviço de matrícula com validação assíncrona de pré-requisitos, limites de vagas e choque de horários.
+
+Construção do fluxo de encerramento de pauta e cálculo automatizado do Coeficiente de Rendimento (CR).
+
+### Fase 3: Testes, Documentação e Entrega
+Elaboração de testes unitários e de integração para as regras de negócio críticas.
+
+Documentação interativa dos endpoints (Swagger/OpenAPI ou Coleção GraphQL).
+"""
+
 ---
 
 ## 2. Módulos e Controle de Acesso (RBAC)

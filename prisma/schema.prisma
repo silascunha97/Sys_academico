@@ -10,122 +10,111 @@ datasource db {
 }
 
 // 1. Tabela Base: Pessoa
-model Pessoa {
-  id_pessoa  Int       @id @default(autoincrement()) @map("ID_pessoa")
-  cpf        String    @unique @map("CPF") @db.VarChar(11)
-  nome       String    @map("Nome") @db.VarChar(100)
-  data_nasc  DateTime? @map("Data_Nasc") @db.Date
+enum Role {
+  ADMIN
+  PROFESSOR
+  STUDENT
+}
 
-  // Relacionamentos 1:1 (Herança)
-  aluno     Aluno?
+enum EnrollmentStatus {
+  ENROLLED
+  APPROVED
+  FAILED_GRADE
+  FAILED_ABSENCE
+  DROPPED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  profile   Profile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   Student?
   professor Professor?
-
-  @@map("Pessoa")
 }
 
-// 2. Tabela: Departamento
-model Departamento {
-  id_departamento Int    @id @default(autoincrement()) @map("ID_departamento")
-  nome_depar      String @map("Nome_depar") @db.VarChar(100)
-  sigla           String @map("Sigla") @db.VarChar(10)
-
-  // Relacionamento 1:N com Professor
-  professores Professor[]
-
-  @@map("Departamento")
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  cpf       String?  @unique
+  phone     String?
 }
 
-// 3. Especialização: Aluno
-model Aluno {
-  id_pessoa    Int    @id @map("ID_pessoa")
-  ra           String @unique @map("RA") @db.VarChar(20)
-  status_matri String @map("Status_matri") @db.VarChar(20)
-
-  // Relação 1:1 com Pessoa (Usa a mesma chave id_pessoa)
-  pessoa Pessoa @relation(fields: [id_pessoa], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
-
-  // Relação 1:N com Matricula
-  matriculas Matricula[]
-
-  @@map("Aluno")
+model Student {
+  id           String       @id @default(uuid())
+  registration String       @unique // Número de Matrícula
+  userId       String       @unique
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String
+  course       Course       @relation(fields: [courseId], references: [id])
+  enrollments  Enrollment[]
 }
 
-// 4. Especialização: Professor
 model Professor {
-  id_pessoa       Int @id @map("ID_pessoa")
-  id_departamento Int @map("ID_departamento")
-
-  // Relação 1:1 com Pessoa
-  pessoa Pessoa @relation(fields: [id_pessoa], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
-
-  // Relação 1:N com Departamento
-  departamento Departamento @relation(fields: [id_departamento], references: [id_departamento], onDelete: Restrict, onUpdate: Cascade)
-
-  // Relação 1:N com Turma
-  turmas Turma[]
-
-  @@map("Professor")
+  id           String   @id @default(uuid())
+  registration String   @unique
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classes      Class[]
 }
 
-// 5. Tabela: Curso
-model Curso {
-  id_curso   Int    @id @default(autoincrement()) @map("ID_curso")
-  nome_curso String @map("Nome_curso") @db.VarChar(100)
-  duracao    Int    @map("Duracao")
-
-  // Relação 1:N com Disciplina
-  disciplinas Disciplina[]
-
-  @@map("Curso")
+model Course {
+  id          String       @id @default(uuid())
+  name        String
+  code        String       @unique
+  students    Student[]
+  disciplines Discipline[]
 }
 
-// 6. Tabela: Disciplina
-model Disciplina {
-  id_disciplina Int    @id @default(autoincrement()) @map("ID_disciplina")
-  nome_disc     String @map("Nome_disc") @db.VarChar(100)
-  id_curso      Int    @map("ID_curso")
+model Discipline {
+  id           String       @id @default(uuid())
+  code         String       @unique
+  name         String
+  workload     Int          // Carga horária em horas
+  courseId     String
+  course       Course       @relation(fields: [courseId], references: [id])
+  
+  // Auto-relacionamento N:N para Pré-requisitos
+  prerequisites Discipline[] @relation("Prerequisites")
+  requiredFor   Discipline[] @relation("Prerequisites")
 
-  // Relação 1:N com Curso
-  curso Curso @relation(fields: [id_curso], references: [id_curso], onDelete: Restrict, onUpdate: Cascade)
-
-  // Relação 1:N com Turma
-  turmas Turma[]
-
-  @@map("Disciplina")
+  classes      Class[]
 }
 
-// 7. Tabela: Turma
-model Turma {
-  id_turma      Int     @id @default(autoincrement()) @map("ID_turma")
-  ano           Int     @map("Ano")
-  semestre      Int     @map("Semestre")
-  horario       String? @map("Horario") @db.VarChar(50)
-  id_disciplina Int     @map("ID_disciplina")
-  id_professor  Int     @map("ID_professor")
+model Class {
+  id           String       @id @default(uuid())
+  code         String       // Ex: 2026.1-A
+  semester     String       // Ex: 2026.1
+  schedule     String       // Ex: "SEG_19:00-21:00,QUA_19:00-21:00"
+  capacity     Int          @default(40)
+  disciplineId String
+  discipline   Discipline   @relation(fields: [disciplineId], references: [id])
+  professorId  String
+  professor    Professor    @relation(fields: [professorId], references: [id])
+  
+  enrollments  Enrollment[]
 
-  // Relações com Disciplina e Professor
-  disciplina Disciplina @relation(fields: [id_disciplina], references: [id_disciplina], onDelete: Restrict, onUpdate: Cascade)
-  professor  Professor  @relation(fields: [id_professor], references: [id_pessoa], onDelete: Restrict, onUpdate: Cascade)
-
-  // Relação 1:N com Matricula
-  matriculas Matricula[]
-
-  @@map("Turma")
+  createdAt    DateTime     @default(now())
 }
 
-// 8. Tabela: Matricula (Entidade Associativa)
-model Matricula {
-  id_matricula Int      @id @default(autoincrement()) @map("ID_matricula")
-  id_aluno     Int      @map("ID_aluno")
-  id_turma     Int      @map("ID_turma")
-  nota         Decimal? @map("Nota") @db.Decimal(4, 2)
-  frequencia   Decimal? @map("Frequencia") @db.Decimal(5, 2)
+model Enrollment {
+  id         String           @id @default(uuid())
+  studentId  String
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId    String
+  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  status     EnrollmentStatus @default(ENROLLED)
+  finalGrade Float?
+  absences   Int              @default(0)
 
-  // Relações com Aluno e Turma
-  aluno Aluno @relation(fields: [id_aluno], references: [id_pessoa], onDelete: Cascade, onUpdate: Cascade)
-  turma Turma @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: Cascade)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
-  // Garante que o mesmo aluno não seja matriculado mais de uma vez na mesma turma
-  @@unique([id_aluno, id_turma], name: "UQ_Aluno_Turma")
-  @@map("Matricula")
+  @@unique([studentId, classId])
 }

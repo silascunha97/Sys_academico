@@ -209,6 +209,14 @@ src/
         ├── grades.service.ts
         └── grades.module.ts
 ```
+### 🎯 Responsabilidade das Camadas
+
+| Diretório | Camada / Conceito | Responsabilidade Principal |
+| :--- | :--- | :--- |
+| `common/` | Cross-cutting | Decorators, Interceptors, Guards e Filters reutilizáveis em toda a API. |
+| `core/` | Infraestrutura | Conexão central com banco de dados (`PrismaService`) e carregamento de envs. |
+| `modules/*/domain/` | Domínio Puro | Regras de negócio críticas (RN-01 a RN-06) isoladas do framework/Prisma. |
+| `modules/*/` | Feature Modules | Modularização por contexto de negócio (Auth, Academic, Enrollments, etc.). |
 
 ```prisma
 datasource db {
